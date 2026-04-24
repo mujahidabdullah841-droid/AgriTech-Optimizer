@@ -8,72 +8,66 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Native App Feel
+# Initialize Session State
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+
+# Custom CSS for Login & Native App Feel
 st.markdown("""
     <style>
-    /* Hide Streamlit Menu and Footer */
+    /* Google Login Button Style */
+    .google-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: white;
+        color: #757575;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 500;
+        width: 100%;
+        margin-top: 20px;
+    }
+    .google-btn img {
+        width: 20px;
+        margin-right: 15px;
+    }
+    
+    /* App UI tweaks */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-
-    /* Main Container Padding */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 600px; /* Force mobile width feel on desktop */
-    }
-
-    /* App Card Styling */
-    .app-card {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-        border: 1px solid #eee;
-    }
-
-    /* Button Styling */
-    .stButton>button {
-        width: 100%;
-        border-radius: 12px;
-        height: 50px;
-        font-weight: 600;
-        background-color: #2e7d32;
-        color: white;
-        border: none;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #1b5e20;
-        transform: translateY(-2px);
-    }
-
-    /* Tab Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-        background-color: #f1f8e9;
-        padding: 10px;
-        border-radius: 15px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 40px;
-        white-space: pre-wrap;
-        background-color: white;
-        border-radius: 10px;
-        padding: 0 20px;
-    }
-
-    /* Header Styling */
-    .app-header {
-        text-align: center;
-        padding: 20px 0;
-    }
+    .block-container { padding-top: 2rem; max-width: 600px; }
+    .app-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+    .stButton>button { width: 100%; border-radius: 12px; height: 50px; font-weight: 600; background-color: #2e7d32; color: white; border: none; }
     </style>
 """, unsafe_allow_html=True)
 
+# --- LOGIN SCREEN ---
+if not st.session_state["logged_in"]:
+    st.markdown('<div style="text-align: center; padding: 50px 0;">', unsafe_allow_html=True)
+    st.image("https://cdn-icons-png.flaticon.com/512/2991/2991148.png", width=80) # Google Icon placeholder
+    st.title("AgriTech Optimizer")
+    st.markdown("### Welcome to the future of farming")
+    st.write("Please sign in to access your farm dashboard and AI tools.")
+    
+    if st.button("Sign in with Google", type="primary"):
+        # In a real app, this would redirect to Google OAuth
+        # For this version, we simulate the login success
+        st.session_state["logged_in"] = True
+        st.success("Redirecting to your dashboard...")
+        st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop() # Stop execution here so only login is shown
+
+# --- MAIN APP UI (Only shown if logged_in is True) ---
 # App Header
-st.markdown('<div class="app-header"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
+st.markdown('<div style="text-align: right;"><button style="border:none; background:none; color:#2e7d32; cursor:pointer;" onclick="window.location.reload();">Log Out</button></div>', unsafe_allow_html=True)
+st.markdown('<div class="app-header" style="text-align: center; padding: 20px 0;"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
 
 # Navigation using Tabs (App Menu)
 tab_home, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
