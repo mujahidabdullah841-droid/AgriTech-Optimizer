@@ -10,10 +10,8 @@ st.set_page_config(
 )
 
 # Initialize Google Authenticator
-# NOTE: Replace 'your_cookie_secret' with a random long string for security
 authenticator = Authenticate(
-    client_id="791924404369-p9p942gn9j15hhdpiqh13dvfpabicqbl.apps.googleusercontent.com",
-    client_secret="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",
+    secret_credentials_path='google_credentials.json',
     cookie_name="agritech_auth_cookie",
     cookie_key="agritech_secret_key_2026",
     redirect_uri="http://localhost:8503",
