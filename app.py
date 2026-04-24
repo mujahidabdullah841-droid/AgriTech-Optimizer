@@ -80,13 +80,15 @@ if not st.session_state["logged_in"]:
                 
                 # Mock Verification: Accept if password is 'farm2026'
                 # In a real app, you'd check this against a database
+                st.info("Demo Password: farm2026")
                 if password == "farm2026":
                     st.session_state["logged_in"] = True
                     st.success("Verification Successful! Redirecting...")
+                    import time
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.error("Invalid password. Please try again.")
+                    st.error("Invalid password. Please use 'farm2026' for this demo.")
     
     st.markdown('<p style="font-size: 0.8rem; color: #888; margin-top: 20px;">Secure 256-bit SSL Encryption Active</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
