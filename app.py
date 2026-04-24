@@ -75,7 +75,7 @@ tab_home, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Health", "🌾 Nutritio
 # --- TAB: HOME / DASHBOARD ---
 with tab_home:
     # Banner Image
-    st.image(r"C:\Users\Mujahid%20Abdullah\.gemini\antigravity\brain\1cc07623-af7a-457d-bf69-1aa01fa7490a\agritech_dashboard_banner_1777028429086.png", use_container_width=True)
+    st.image(r"C:\Users\Mujahid Abdullah\.gemini\antigravity\brain\1cc07623-af7a-457d-bf69-1aa01fa7490a\agritech_dashboard_banner_1777028429086.png", use_container_width=True)
     
     st.markdown("## 👋 Good Morning, Farmer!")
     st.write("Here is what's happening on your farm today.")
