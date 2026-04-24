@@ -9,11 +9,30 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize Google Authenticator using Streamlit Secrets
-# (This is the most secure way for cloud deployment)
+# --- GOOGLE AUTH SETUP ---
+import json
+import os
+
+# Dynamically create the credentials JSON from Streamlit Secrets
+# This allows the app to work in the cloud without keeping secrets on GitHub
+if not os.path.exists("google_credentials.json"):
+    creds_dict = {
+        "web": {
+            "client_id": st.secrets["google"]["client_id"],
+            "client_secret": st.secrets["google"]["client_secret"],
+            "project_id": st.secrets["google"]["project_id"],
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "redirect_uris": ["https://mujahidabdullah841-droid-agritech-optimizer-app.streamlit.app", "http://localhost:8503"]
+        }
+    }
+    with open("google_credentials.json", "w") as f:
+        json.dump(creds_dict, f)
+
+# Initialize Google Authenticator
 authenticator = Authenticate(
-    client_id=st.secrets["google"]["client_id"],
-    client_secret=st.secrets["google"]["client_secret"],
+    secret_credentials_path='google_credentials.json',
     cookie_name="agritech_auth_cookie",
     cookie_key="agritech_secret_key_2026",
     redirect_uri="https://mujahidabdullah841-droid-agritech-optimizer-app.streamlit.app",
