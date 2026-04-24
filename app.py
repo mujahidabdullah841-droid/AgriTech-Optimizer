@@ -80,6 +80,14 @@ with tab_home:
     st.markdown("## 👋 Good Morning, Farmer!")
     st.write("Here is what's happening on your farm today.")
     
+    # Weather Alert Widget
+    st.markdown("""
+        <div style="background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <p style="margin:0; color: #0d47a1; font-weight: bold;">🌤 Weather Alert: High Humidity Expected</p>
+            <p style="margin:0; font-size: 0.9rem; color: #1565c0;">Expect light showers in the afternoon. Good time to move sensitive livestock indoors.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
     # Vibrant Metric Cards
     m_col1, m_col2, m_col3 = st.columns(3)
     with m_col1:
@@ -103,6 +111,14 @@ with tab_home:
                 <p style="margin:0; font-size: 0.8rem;">Next Vacc.</p>
             </div>
         """, unsafe_allow_html=True)
+
+    st.markdown("### 📈 Performance Trends")
+    chart_data = pd.DataFrame({
+        'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'Milk Yield (L)': [45, 48, 47, 52, 50, 55, 58],
+        'Feed Efficiency (%)': [85, 86, 84, 88, 87, 89, 91]
+    })
+    st.line_chart(chart_data.set_index('Day'))
     
     st.markdown("### 📋 Today's Checklist")
     st.checkbox("Check water levels in the north pasture", value=True)
@@ -112,11 +128,11 @@ with tab_home:
     st.markdown("### 🚀 Quick Actions")
     q_col1, q_col2 = st.columns(2)
     with q_col1:
-        if st.button("🩺 Diagnostic"):
-            st.info("Go to Health tab")
+        if st.button("🩺 Run Health Check", key="q_diag"):
+            st.info("Navigate to Health tab")
     with q_col2:
-        if st.button("🌾 Planner"):
-            st.info("Go to Nutrition tab")
+        if st.button("🌾 Calculate Feed", key="q_nut"):
+            st.info("Navigate to Nutrition tab")
 
     st.markdown("""
         <div class="app-card" style="margin-top:20px; border-left: 5px solid #2e7d32;">
