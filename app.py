@@ -9,12 +9,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize Google Authenticator
+# Initialize Google Authenticator using Streamlit Secrets
+# (This is the most secure way for cloud deployment)
 authenticator = Authenticate(
-    secret_credentials_path='google_credentials.json',
+    client_id=st.secrets["google"]["client_id"],
+    client_secret=st.secrets["google"]["client_secret"],
     cookie_name="agritech_auth_cookie",
     cookie_key="agritech_secret_key_2026",
-    redirect_uri="http://localhost:8503",
+    redirect_uri="https://mujahidabdullah841-droid-agritech-optimizer-app.streamlit.app",
 )
 
 # Initialize Session State
