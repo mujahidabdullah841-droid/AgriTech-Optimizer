@@ -8,6 +8,16 @@ st.set_page_config(
     layout="wide"
 )
 
+# Initialize Google Authenticator
+# NOTE: Replace 'your_cookie_secret' with a random long string for security
+authenticator = Authenticate(
+    client_id="791924404369-p9p942gn9j15hhdpiqh13dvfpabicqbl.apps.googleusercontent.com",
+    client_secret="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",
+    cookie_name="agritech_auth_cookie",
+    cookie_key="agritech_secret_key_2026",
+    redirect_uri="http://localhost:8503",
+)
+
 # Initialize Session State
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -16,93 +26,49 @@ if "herd" not in st.session_state:
 if "inventory" not in st.session_state:
     st.session_state["inventory"] = {"Hay (kg)": 500, "Silage (kg)": 200, "Vaccines (doses)": 10}
 
-# Custom CSS for Native App Feel
+# Custom CSS for Login & Native App Feel
 st.markdown("""
     <style>
-    /* Google Login Button Style */
-    .google-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: white;
-        color: #757575;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 10px 20px;
-        cursor: pointer;
-        font-family: 'Roboto', sans-serif;
-        font-weight: 500;
-        width: 100%;
-        margin-top: 20px;
-    }
-    
-    /* App UI tweaks */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .block-container { padding-top: 1rem; max-width: 600px; }
     .app-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
     .stButton>button { width: 100%; border-radius: 12px; height: 50px; font-weight: 600; background-color: #2e7d32; color: white; border: none; }
-    
-    /* Animal Card */
-    .animal-card {
-        border-left: 5px solid #2e7d32;
-        padding: 15px;
-        background: #f9f9f9;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }
+    .animal-card { border-left: 5px solid #2e7d32; padding: 15px; background: #f9f9f9; border-radius: 10px; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
 # --- LOGIN SCREEN ---
-if not st.session_state["logged_in"]:
+# Check if user is already authenticated via Cookie or Login
+authenticator.check_authenticity()
+
+if not st.session_state.get("connected"):
     st.markdown('<div style="text-align: center; padding: 30px 0;">', unsafe_allow_html=True)
     st.image("https://cdn-icons-png.flaticon.com/512/2991/2991148.png", width=60)
     st.title("AgriTech Optimizer")
-    st.markdown("### Secure Login")
-    st.write("Enter your Gmail credentials to access your farm.")
+    st.markdown("### Secure Real-World Login")
+    st.write("Please sign in with your official Google account.")
     
-    with st.container():
-        email = st.text_input("Gmail Address", placeholder="example@gmail.com")
-        password = st.text_input("Password", type="password", placeholder="Enter your password")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Login to AgriTech", type="primary"):
-            if not email.endswith("@gmail.com"):
-                st.error("Please use a valid @gmail.com account.")
-            elif len(password) < 6:
-                st.error("Password must be at least 6 characters.")
-            else:
-                with st.spinner("Verifying with Google Security Servers..."):
-                    import time
-                    time.sleep(2) # Simulated verification delay
-                
-                # Mock Verification: Accept if password is 'farm2026'
-                # In a real app, you'd check this against a database
-                st.info("Demo Password: farm2026")
-                if password == "farm2026":
-                    st.session_state["logged_in"] = True
-                    st.success("Verification Successful! Redirecting...")
-                    import time
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("Invalid password. Please use 'farm2026' for this demo.")
+    # Official Google Sign-In Button
+    authenticator.login()
     
-    st.markdown('<p style="font-size: 0.8rem; color: #888; margin-top: 20px;">Secure 256-bit SSL Encryption Active</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size: 0.8rem; color: #888; margin-top: 50px;">Verified by Google OAuth 2.0</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# --- MAIN APP UI (Only shown if logged_in is True) ---
-# App Header & Logout
+# Set logged_in for compat with rest of app
+st.session_state["logged_in"] = True
+user_info = st.session_state.get("user_info", {})
+user_name = user_info.get("name", "Farmer")
+
+# --- MAIN APP UI ---
+# Logout
 head_col1, head_col2 = st.columns([4, 1])
 with head_col2:
-    if st.button("🚪 Log Out"):
-        st.session_state["logged_in"] = False
-        st.rerun()
+    authenticator.logout()
 
-st.markdown('<div class="app-header" style="text-align: center; padding: 10px 0;"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="app-header" style="text-align: center; padding: 10px 0;"><h1>🚜 AgriTech AI</h1><p>Welcome, {user_name}</p></div>', unsafe_allow_html=True)
 
 # Navigation using Tabs (App Menu)
 tab_home, tab_herd, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🐄 My Herd", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
