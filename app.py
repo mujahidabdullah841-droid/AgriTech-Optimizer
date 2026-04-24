@@ -8,35 +8,97 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Premium Look
+# Custom CSS for Native App Feel
 st.markdown("""
     <style>
-    .main {
-        background-color: #f8f9fa;
+    /* Hide Streamlit Menu and Footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Main Container Padding */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 600px; /* Force mobile width feel on desktop */
     }
-    .stMetric {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .status-card {
+
+    /* App Card Styling */
+    .app-card {
+        background: white;
         padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 10px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        border: 1px solid #eee;
     }
-    h1, h2, h3 {
-        color: #2e7d32;
+
+    /* Button Styling */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        height: 50px;
+        font-weight: 600;
+        background-color: #2e7d32;
+        color: white;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #1b5e20;
+        transform: translateY(-2px);
+    }
+
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: #f1f8e9;
+        padding: 10px;
+        border-radius: 15px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 40px;
+        white-space: pre-wrap;
+        background-color: white;
+        border-radius: 10px;
+        padding: 0 20px;
+    }
+
+    /* Header Styling */
+    .app-header {
+        text-align: center;
+        padding: 20px 0;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# App Title & Header
-st.title("🚜 AgriTech: Livestock Health & Nutrition AI")
-st.markdown("---")
+# App Header
+st.markdown('<div class="app-header"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
 
-# Navigation using Tabs for a cleaner feel
-tab1, tab2, tab3 = st.tabs(["🩺 Health Diagnostic", "🌾 Nutrition Planner", "📅 Vaccination Guide"])
+# Navigation using Tabs (App Menu)
+tab_home, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
+
+# --- TAB: HOME / DASHBOARD ---
+with tab_home:
+    st.markdown("### Welcome back, Farmer!")
+    
+    # Quick Stats in Cards
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown('<div class="app-card"><h3>📈 Productivity</h3><p>+12% this week</p></div>', unsafe_allow_html=True)
+    with col_b:
+        st.markdown('<div class="app-card"><h3>🐮 Herd Size</h3><p>24 Animals</p></div>', unsafe_allow_html=True)
+    
+    st.write("#### Quick Actions")
+    if st.button("🚀 Start New Health Check"):
+        st.info("Switch to the Health tab above to start!")
+    
+    st.markdown("""
+        <div class="app-card">
+            <h4>💡 Farming Tip of the Day</h4>
+            <p>Ensure your livestock have access to clean water 24/7. Dehydration can reduce milk yield by up to 40%!</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- TAB 1: HEALTH DIAGNOSTIC ---
 with tab1:
