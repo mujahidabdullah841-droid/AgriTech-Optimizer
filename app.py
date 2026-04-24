@@ -61,7 +61,7 @@ st.markdown("""
 
 # --- LOGIN SCREEN ---
 # Check if user is already authenticated via Cookie or Login
-authenticator.check_authenticity()
+authenticator.check_authentification()
 
 if not st.session_state.get("connected"):
     st.markdown('<div style="text-align: center; padding: 30px 0;">', unsafe_allow_html=True)
