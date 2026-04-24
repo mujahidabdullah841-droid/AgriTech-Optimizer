@@ -74,23 +74,54 @@ tab_home, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Health", "🌾 Nutritio
 
 # --- TAB: HOME / DASHBOARD ---
 with tab_home:
-    st.markdown("### Welcome back, Farmer!")
+    # Banner Image
+    st.image(r"C:\Users\Mujahid%20Abdullah\.gemini\antigravity\brain\1cc07623-af7a-457d-bf69-1aa01fa7490a\agritech_dashboard_banner_1777028429086.png", use_container_width=True)
     
-    # Quick Stats in Cards
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown('<div class="app-card"><h3>📈 Productivity</h3><p>+12% this week</p></div>', unsafe_allow_html=True)
-    with col_b:
-        st.markdown('<div class="app-card"><h3>🐮 Herd Size</h3><p>24 Animals</p></div>', unsafe_allow_html=True)
+    st.markdown("## 👋 Good Morning, Farmer!")
+    st.write("Here is what's happening on your farm today.")
     
-    st.write("#### Quick Actions")
-    if st.button("🚀 Start New Health Check"):
-        st.info("Switch to the Health tab above to start!")
+    # Vibrant Metric Cards
+    m_col1, m_col2, m_col3 = st.columns(3)
+    with m_col1:
+        st.markdown("""
+            <div style="background: linear-gradient(135deg, #66bb6a, #43a047); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                <h2 style="margin:0; color:white;">98%</h2>
+                <p style="margin:0; font-size: 0.8rem;">Health Index</p>
+            </div>
+        """, unsafe_allow_html=True)
+    with m_col2:
+        st.markdown("""
+            <div style="background: linear-gradient(135deg, #ffa726, #fb8c00); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                <h2 style="margin:0; color:white;">12</h2>
+                <p style="margin:0; font-size: 0.8rem;">Feeding Alerts</p>
+            </div>
+        """, unsafe_allow_html=True)
+    with m_col3:
+        st.markdown("""
+            <div style="background: linear-gradient(135deg, #29b6f6, #039be5); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+                <h2 style="margin:0; color:white;">5</h2>
+                <p style="margin:0; font-size: 0.8rem;">Next Vacc.</p>
+            </div>
+        """, unsafe_allow_html=True)
     
+    st.markdown("### 📋 Today's Checklist")
+    st.checkbox("Check water levels in the north pasture", value=True)
+    st.checkbox("Administer FMD vaccine to new calves", value=False)
+    st.checkbox("Review monthly fodder inventory", value=False)
+    
+    st.markdown("### 🚀 Quick Actions")
+    q_col1, q_col2 = st.columns(2)
+    with q_col1:
+        if st.button("🩺 Diagnostic"):
+            st.info("Go to Health tab")
+    with q_col2:
+        if st.button("🌾 Planner"):
+            st.info("Go to Nutrition tab")
+
     st.markdown("""
-        <div class="app-card">
-            <h4>💡 Farming Tip of the Day</h4>
-            <p>Ensure your livestock have access to clean water 24/7. Dehydration can reduce milk yield by up to 40%!</p>
+        <div class="app-card" style="margin-top:20px; border-left: 5px solid #2e7d32;">
+            <h4>💡 Farming Tip</h4>
+            <p>Rotating your grazing pastures every 3 days can improve soil health and reduce parasite loads in your livestock.</p>
         </div>
     """, unsafe_allow_html=True)
 
