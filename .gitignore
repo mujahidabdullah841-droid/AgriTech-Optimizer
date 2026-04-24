@@ -1,18 +1,17 @@
+# Streamlit
+.streamlit/
+static/
+google_credentials.json
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 .env
 venv/
-ENV/
+env/
+.venv/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-
-# Streamlit
-.streamlit/
-
-# OS
-.DS_Store
-Thumbs.db
+# Secrets
+*.secret
+*.key
