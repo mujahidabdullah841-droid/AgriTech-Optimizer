@@ -11,8 +11,12 @@ st.set_page_config(
 # Initialize Session State
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
+if "herd" not in st.session_state:
+    st.session_state["herd"] = [] # List of dicts: {"name", "type", "weight", "status"}
+if "inventory" not in st.session_state:
+    st.session_state["inventory"] = {"Hay (kg)": 500, "Silage (kg)": 200, "Vaccines (doses)": 10}
 
-# Custom CSS for Login & Native App Feel
+# Custom CSS for Native App Feel
 st.markdown("""
     <style>
     /* Google Login Button Style */
@@ -31,18 +35,23 @@ st.markdown("""
         width: 100%;
         margin-top: 20px;
     }
-    .google-btn img {
-        width: 20px;
-        margin-right: 15px;
-    }
     
     /* App UI tweaks */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .block-container { padding-top: 2rem; max-width: 600px; }
+    .block-container { padding-top: 1rem; max-width: 600px; }
     .app-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
     .stButton>button { width: 100%; border-radius: 12px; height: 50px; font-weight: 600; background-color: #2e7d32; color: white; border: none; }
+    
+    /* Animal Card */
+    .animal-card {
+        border-left: 5px solid #2e7d32;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -70,38 +79,31 @@ st.markdown('<div style="text-align: right;"><button style="border:none; backgro
 st.markdown('<div class="app-header" style="text-align: center; padding: 20px 0;"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
 
 # Navigation using Tabs (App Menu)
-tab_home, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
+tab_home, tab_herd, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🐄 My Herd", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
 
 # --- TAB: HOME / DASHBOARD ---
 with tab_home:
     # Banner Image
     st.image(r"C:\Users\Mujahid Abdullah\.gemini\antigravity\brain\1cc07623-af7a-457d-bf69-1aa01fa7490a\agritech_dashboard_banner_1777028429086.png", use_container_width=True)
     
-    st.markdown("## 👋 Good Morning, Farmer!")
-    st.write("Here is what's happening on your farm today.")
+    st.markdown(f"## 👋 Good Morning, Farmer!")
+    st.write("Here is the live status of your virtual farm.")
     
-    # Weather Alert Widget
-    st.markdown("""
-        <div style="background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="margin:0; color: #0d47a1; font-weight: bold;">🌤 Weather Alert: High Humidity Expected</p>
-            <p style="margin:0; font-size: 0.9rem; color: #1565c0;">Expect light showers in the afternoon. Good time to move sensitive livestock indoors.</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Vibrant Metric Cards
+    # Vibrant Metric Cards (Linked to Session State)
     m_col1, m_col2, m_col3 = st.columns(3)
     with m_col1:
-        st.markdown("""
+        st.markdown(f"""
             <div style="background: linear-gradient(135deg, #66bb6a, #43a047); padding: 20px; border-radius: 15px; color: white; text-align: center;">
-                <h2 style="margin:0; color:white;">98%</h2>
-                <p style="margin:0; font-size: 0.8rem;">Health Index</p>
+                <h2 style="margin:0; color:white;">{len(st.session_state['herd'])}</h2>
+                <p style="margin:0; font-size: 0.8rem;">Animals</p>
             </div>
         """, unsafe_allow_html=True)
     with m_col2:
-        st.markdown("""
+        total_inv = sum(st.session_state['inventory'].values())
+        st.markdown(f"""
             <div style="background: linear-gradient(135deg, #ffa726, #fb8c00); padding: 20px; border-radius: 15px; color: white; text-align: center;">
-                <h2 style="margin:0; color:white;">12</h2>
-                <p style="margin:0; font-size: 0.8rem;">Feeding Alerts</p>
+                <h2 style="margin:0; color:white;">{total_inv}</h2>
+                <p style="margin:0; font-size: 0.8rem;">Supplies (kg)</p>
             </div>
         """, unsafe_allow_html=True)
     with m_col3:
@@ -119,7 +121,56 @@ with tab_home:
         'Feed Efficiency (%)': [85, 86, 84, 88, 87, 89, 91]
     })
     st.line_chart(chart_data.set_index('Day'))
+
+# --- TAB: MANAGE HERD ---
+with tab_herd:
+    st.header("🐄 My Digital Herd")
     
+    with st.expander("➕ Add New Animal to Farm"):
+        with st.form("add_animal_form"):
+            a_name = st.text_input("Animal Name/ID", placeholder="e.g. Bessie")
+            a_type = st.selectbox("Species", ["Cattle", "Sheep", "Goat", "Pig", "Rabbit", "Horse"])
+            a_weight = st.number_input("Weight (kg)", min_value=1.0, value=50.0)
+            submitted = st.form_submit_button("Add to My Herd")
+            
+            if submitted:
+                if a_name:
+                    st.session_state['herd'].append({
+                        "name": a_name,
+                        "type": a_type,
+                        "weight": a_weight,
+                        "status": "Healthy"
+                    })
+                    st.success(f"Added {a_name} the {a_type} to your farm!")
+                    st.rerun()
+                else:
+                    st.error("Please enter a name.")
+
+    st.write("#### Your Animals")
+    if not st.session_state['herd']:
+        st.info("Your farm is empty. Add your first animal above!")
+    else:
+        for i, animal in enumerate(st.session_state['herd']):
+            st.markdown(f"""
+                <div class="animal-card">
+                    <h4 style="margin:0; color:#2e7d32;">{animal['name']}</h4>
+                    <p style="margin:0; font-size:0.9rem;"><b>Type:</b> {animal['type']} | <b>Weight:</b> {animal['weight']} kg</p>
+                    <p style="margin:0; font-size:0.8rem; color:#66bb6a;">● Status: {animal['status']}</p>
+                </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"Remove {animal['name']}", key=f"rem_{i}"):
+                st.session_state['herd'].pop(i)
+                st.rerun()
+
+# --- TAB 1: HEALTH DIAGNOSTIC ---
+with tab1:
+    
+    st.markdown("### 📦 Inventory & Supplies")
+    inv_col1, inv_col2, inv_col3 = st.columns(3)
+    for i, (item, qty) in enumerate(st.session_state['inventory'].items()):
+        cols = [inv_col1, inv_col2, inv_col3]
+        cols[i % 3].metric(item, f"{qty}")
+
     st.markdown("### 📋 Today's Checklist")
     st.checkbox("Check water levels in the north pasture", value=True)
     st.checkbox("Administer FMD vaccine to new calves", value=False)
@@ -131,8 +182,18 @@ with tab_home:
         if st.button("🩺 Run Health Check", key="q_diag"):
             st.info("Navigate to Health tab")
     with q_col2:
-        if st.button("🌾 Calculate Feed", key="q_nut"):
-            st.info("Navigate to Nutrition tab")
+        if st.button("🥣 Feed Herd (-10kg Hay)", key="q_feed"):
+            if st.session_state['inventory']['Hay (kg)'] >= 10:
+                st.session_state['inventory']['Hay (kg)'] -= 10
+                st.success("Herd fed! Inventory updated.")
+                st.rerun()
+            else:
+                st.error("Not enough Hay!")
+
+    st.markdown("### 📜 Recent Farm Activity")
+    st.write("● New animal added to the herd")
+    st.write("● Weekly health index updated")
+    st.write("● Rain alert received for tomorrow")
 
     st.markdown("""
         <div class="app-card" style="margin-top:20px; border-left: 5px solid #2e7d32;">
@@ -228,37 +289,43 @@ with tab2:
     col_input, col_result = st.columns([1, 1])
     
     with col_input:
-        animal_type = st.selectbox("Select Animal:", ["Cattle", "Sheep", "Goat", "Rabbit", "Horse", "Pigs", "Poultry (Broilers/Layers)", "Donkey", "Camel", "Turkey"])
+        use_herd = st.checkbox("Select Animal from My Herd", value=False)
+        
+        if use_herd and st.session_state['herd']:
+            selected_a = st.selectbox("Choose Animal:", [a['name'] for a in st.session_state['herd']])
+            animal_data = next(item for item in st.session_state['herd'] if item["name"] == selected_a)
+            animal_type = animal_data['type']
+            weight_kg = animal_data['weight']
+            st.info(f"Selected: {animal_type} | Weight: {weight_kg} kg")
+        else:
+            if use_herd: st.warning("Your herd is empty! Add animals in the 'My Herd' tab.")
+            animal_type = st.selectbox("Select Animal Type:", ["Cattle", "Sheep", "Goat", "Rabbit", "Horse", "Pigs", "Poultry (Broilers/Layers)", "Donkey", "Camel", "Turkey"])
+            
+            # Adjust default weights
+            weights = {
+                "Cattle": 450.0, "Sheep": 50.0, "Goat": 50.0, "Rabbit": 3.0, 
+                "Horse": 500.0, "Pigs": 100.0, "Poultry (Broilers/Layers)": 2.0,
+                "Donkey": 200.0, "Camel": 600.0, "Turkey": 8.0
+            }
+            default_weight = weights.get(animal_type, 50.0)
+            weight_kg = st.number_input("Animal Weight (kg):", min_value=0.1, value=default_weight)
+
         life_stage = st.selectbox("Select Life Stage:", ["Maintenance", "Growth", "Lactation (High Yield)", "Lactation (Low Yield)"])
         
-        # Adjust default weights
-        weights = {
-            "Cattle": 450.0, "Sheep": 50.0, "Goat": 50.0, "Rabbit": 3.0, 
-            "Horse": 500.0, "Pigs": 100.0, "Poultry (Broilers/Layers)": 2.0,
-            "Donkey": 200.0, "Camel": 600.0, "Turkey": 8.0
-        }
-        default_weight = weights.get(animal_type, 50.0)
-        weight_kg = st.number_input("Animal Weight (kg):", min_value=0.1, value=default_weight)
-        
-        # DMI calculation logic based on life stage and species
-        dmi_multiplier = 0.025 # Default 2.5%
-        
+        # DMI calculation logic
+        dmi_multiplier = 0.025
         if animal_type == "Rabbit":
             dmi_multiplier = 0.05 if life_stage == "Lactation (High Yield)" else 0.035
         elif animal_type == "Poultry (Broilers/Layers)":
-            dmi_multiplier = 0.10 if life_stage == "Growth" else 0.06 # High metabolism
+            dmi_multiplier = 0.10 if life_stage == "Growth" else 0.06
         elif animal_type == "Pigs":
             dmi_multiplier = 0.04 if life_stage == "Growth" else 0.03
         elif animal_type == "Donkey":
-            dmi_multiplier = 0.02 # Efficient eaters
+            dmi_multiplier = 0.02
         else:
-            # Standard Livestock Logic
-            if life_stage == "Lactation (High Yield)":
-                dmi_multiplier = 0.04
-            elif life_stage == "Growth":
-                dmi_multiplier = 0.03
-            elif life_stage == "Maintenance":
-                dmi_multiplier = 0.02
+            if life_stage == "Lactation (High Yield)": dmi_multiplier = 0.04
+            elif life_stage == "Growth": dmi_multiplier = 0.03
+            elif life_stage == "Maintenance": dmi_multiplier = 0.02
             
         dmi = weight_kg * dmi_multiplier
     
