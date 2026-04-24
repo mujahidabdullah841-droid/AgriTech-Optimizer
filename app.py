@@ -57,21 +57,40 @@ st.markdown("""
 
 # --- LOGIN SCREEN ---
 if not st.session_state["logged_in"]:
-    st.markdown('<div style="text-align: center; padding: 50px 0;">', unsafe_allow_html=True)
-    st.image("https://cdn-icons-png.flaticon.com/512/2991/2991148.png", width=80) # Google Icon placeholder
+    st.markdown('<div style="text-align: center; padding: 30px 0;">', unsafe_allow_html=True)
+    st.image("https://cdn-icons-png.flaticon.com/512/2991/2991148.png", width=60)
     st.title("AgriTech Optimizer")
-    st.markdown("### Welcome to the future of farming")
-    st.write("Please sign in to access your farm dashboard and AI tools.")
+    st.markdown("### Secure Login")
+    st.write("Enter your Gmail credentials to access your farm.")
     
-    if st.button("Sign in with Google", type="primary"):
-        # In a real app, this would redirect to Google OAuth
-        # For this version, we simulate the login success
-        st.session_state["logged_in"] = True
-        st.success("Redirecting to your dashboard...")
-        st.rerun()
+    with st.container():
+        email = st.text_input("Gmail Address", placeholder="example@gmail.com")
+        password = st.text_input("Password", type="password", placeholder="Enter your password")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Login to AgriTech", type="primary"):
+            if not email.endswith("@gmail.com"):
+                st.error("Please use a valid @gmail.com account.")
+            elif len(password) < 6:
+                st.error("Password must be at least 6 characters.")
+            else:
+                with st.spinner("Verifying with Google Security Servers..."):
+                    import time
+                    time.sleep(2) # Simulated verification delay
+                
+                # Mock Verification: Accept if password is 'farm2026'
+                # In a real app, you'd check this against a database
+                if password == "farm2026":
+                    st.session_state["logged_in"] = True
+                    st.success("Verification Successful! Redirecting...")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Invalid password. Please try again.")
     
+    st.markdown('<p style="font-size: 0.8rem; color: #888; margin-top: 20px;">Secure 256-bit SSL Encryption Active</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    st.stop() # Stop execution here so only login is shown
+    st.stop()
 
 # --- MAIN APP UI (Only shown if logged_in is True) ---
 # App Header & Logout
