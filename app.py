@@ -74,9 +74,14 @@ if not st.session_state["logged_in"]:
     st.stop() # Stop execution here so only login is shown
 
 # --- MAIN APP UI (Only shown if logged_in is True) ---
-# App Header
-st.markdown('<div style="text-align: right;"><button style="border:none; background:none; color:#2e7d32; cursor:pointer;" onclick="window.location.reload();">Log Out</button></div>', unsafe_allow_html=True)
-st.markdown('<div class="app-header" style="text-align: center; padding: 20px 0;"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
+# App Header & Logout
+head_col1, head_col2 = st.columns([4, 1])
+with head_col2:
+    if st.button("🚪 Log Out"):
+        st.session_state["logged_in"] = False
+        st.rerun()
+
+st.markdown('<div class="app-header" style="text-align: center; padding: 10px 0;"><h1>🚜 AgriTech AI</h1><p>Smart Livestock Assistant</p></div>', unsafe_allow_html=True)
 
 # Navigation using Tabs (App Menu)
 tab_home, tab_herd, tab1, tab2, tab3 = st.tabs(["🏠 Home", "🐄 My Herd", "🩺 Health", "🌾 Nutrition", "📅 Schedule"])
