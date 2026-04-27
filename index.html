@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriTech Optimizer | Livestock AI</title>
+    <meta name="description" content="A professional, modern dashboard for AgriTech livestock management and AI health diagnostics.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Login View -->
+    <div id="login-view" class="view active">
+        <div class="login-card glass-panel">
+            <div class="login-header">
+                <i class="ph-fill ph-tractor login-icon"></i>
+                <h1>AgriTech Optimizer</h1>
+                <p>Secure Login</p>
+            </div>
+            
+            <form id="native-login-form" class="login-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="e.g. admin" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="e.g. password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+            </form>
+
+            <div class="divider"><span>Or use an external provider</span></div>
+            
+            <button id="google-login-btn" class="btn btn-outline btn-block">
+                <img src="https://lh3.googleusercontent.com/COxitqgJr1sJnIDe8-jiKhxDx1FrYbtRHKJ9z_hELisAlapwE9LUPh6fcXIfb5vwpbMl4xl9H9TRFPc5NOO8Sb3VSgIBrfRYvW6cUA" alt="Google">
+                Sign in with Google
+            </button>
+
+            <div class="divider"><span>Development</span></div>
+            <button id="bypass-login-btn" class="btn btn-secondary btn-block">🚀 Bypass Login (Dev Mode)</button>
+        </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="app-view" class="view">
+        <nav class="sidebar glass-panel">
+            <div class="brand">
+                <i class="ph-fill ph-tractor"></i>
+                <span>AgriTech AI</span>
+            </div>
+            <ul class="nav-links">
+                <li data-target="home" class="active"><i class="ph ph-house"></i> Home</li>
+                <li data-target="herd"><i class="ph ph-cow"></i> My Herd</li>
+                <li data-target="health"><i class="ph ph-stethoscope"></i> Health</li>
+                <li data-target="nutrition"><i class="ph ph-plant"></i> Nutrition</li>
+                <li data-target="schedule"><i class="ph ph-calendar"></i> Schedule</li>
+            </ul>
+            <div class="user-profile">
+                <div class="avatar"><i class="ph ph-user"></i></div>
+                <div class="user-info">
+                    <span id="display-name">Farmer</span>
+                    <small>Pro Member</small>
+                </div>
+                <button id="logout-btn" class="btn-icon"><i class="ph ph-sign-out"></i></button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <!-- Home Tab -->
+            <section id="tab-home" class="tab-content active fade-in">
+                <div class="banner">
+                    <img id="banner-img" src="" alt="Farm Dashboard Banner">
+                    <div class="banner-overlay">
+                        <h2 id="greeting">Good Morning, Farmer!</h2>
+                        <p>Here is the live status of your virtual farm.</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card gradient-green">
+                        <h2 id="metric-animals">0</h2>
+                        <p>Total Animals</p>
+                    </div>
+                    <div class="metric-card gradient-orange">
+                        <h2 id="metric-supplies">0</h2>
+                        <p>Supplies (kg)</p>
+                    </div>
+                    <div class="metric-card gradient-blue">
+                        <h2>5</h2>
+                        <p>Next Vaccinations</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card glass-panel">
+                        <h3>📋 Today's Checklist</h3>
+                        <div class="checklist">
+                            <label class="checkbox-container">
+                                <input type="checkbox" checked> Check water levels in the north pasture
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox"> Administer FMD vaccine to new calves
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox"> Review monthly fodder inventory
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="card glass-panel tip-card">
+                        <div class="tip-icon"><i class="ph-fill ph-lightbulb"></i></div>
+                        <div>
+                            <h4>Farming Tip</h4>
+                            <p>Rotating your grazing pastures every 3 days can improve soil health and reduce parasite loads in your livestock.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Herd Tab -->
+            <section id="tab-herd" class="tab-content fade-in">
+                <header class="section-header">
+                    <h2>🐄 My Digital Herd</h2>
+                    <button id="add-animal-toggle" class="btn btn-primary"><i class="ph ph-plus"></i> Add Animal</button>
+                </header>
+
+                <div id="add-animal-form-container" class="card glass-panel hidden">
+                    <h3>Add New Animal</h3>
+                    <form id="add-animal-form">
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Animal Name/ID</label>
+                                <input type="text" id="animal-name" required placeholder="e.g. Bessie">
+                            </div>
+                            <div class="input-group">
+                                <label>Species</label>
+                                <select id="animal-type">
+                                    <option>Cattle</option>
+                                    <option>Sheep</option>
+                                    <option>Goat</option>
+                                    <option>Pig</option>
+                                    <option>Rabbit</option>
+                                    <option>Horse</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Weight (kg)</label>
+                                <input type="number" id="animal-weight" value="50" min="1" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save to Herd</button>
+                    </form>
+                </div>
+
+                <div id="herd-list" class="herd-grid">
+                    <!-- Herd cards generated via JS -->
+                </div>
+            </section>
+
+            <!-- Health Tab -->
+            <section id="tab-health" class="tab-content fade-in">
+                <h2>🩺 Interactive Health Diagnostic Wizard</h2>
+                <p class="subtitle">Select observed symptoms below to get an AI-driven health assessment.</p>
+
+                <div class="health-layout">
+                    <div class="card glass-panel symptoms-card">
+                        <h3>What symptoms are you observing?</h3>
+                        <div class="symptoms-grid" id="symptoms-container">
+                            <!-- Checkboxes generated by JS -->
+                        </div>
+                        <button id="run-diagnostic" class="btn btn-primary mt-4">Run Diagnostic Analysis</button>
+                    </div>
+
+                    <div class="card glass-panel results-card">
+                        <h3>Diagnostic Result</h3>
+                        <div id="diagnostic-results">
+                            <p class="placeholder-text">Results will appear here after analysis...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nutrition Tab -->
+            <section id="tab-nutrition" class="tab-content fade-in">
+                <h2>🌾 Smart Nutrition & Fodder Calculator</h2>
+                
+                <div class="nutrition-layout">
+                    <div class="card glass-panel form-card">
+                        <div class="input-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="use-herd-toggle"> Select Animal from My Herd
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                        
+                        <div id="herd-select-container" class="input-group hidden">
+                            <label>Choose Animal:</label>
+                            <select id="nutrition-herd-select"></select>
+                            <p id="nutrition-herd-info" class="helper-text"></p>
+                        </div>
+
+                        <div id="manual-select-container">
+                            <div class="input-group">
+                                <label>Select Animal Type:</label>
+                                <select id="nutrition-type-select">
+                                    <option>Cattle</option><option>Sheep</option><option>Goat</option>
+                                    <option>Rabbit</option><option>Horse</option><option>Pigs</option>
+                                    <option>Poultry (Broilers/Layers)</option><option>Donkey</option>
+                                    <option>Camel</option><option>Turkey</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Animal Weight (kg):</label>
+                                <input type="number" id="nutrition-weight" value="450" min="0.1" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Select Life Stage:</label>
+                            <select id="nutrition-stage">
+                                <option>Maintenance</option>
+                                <option>Growth</option>
+                                <option>Lactation (High Yield)</option>
+                                <option>Lactation (Low Yield)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card glass-panel results-card">
+                        <h3>Recommended Feed Breakdown</h3>
+                        <div class="big-metric">
+                            <span id="dmi-result">0.00</span> <small>kg / day Total DMI</small>
+                        </div>
+
+                        <div class="feed-bars">
+                            <div class="feed-item">
+                                <div class="feed-label">
+                                    <span>Roughage (<span id="roughage-pct">0</span>%)</span>
+                                    <strong id="roughage-kg">0.00 kg</strong>
+                                </div>
+                                <div class="progress-bar"><div id="roughage-bar" class="fill green"></div></div>
+                                <small>Hay, Grass, Pellets, Silage, Crop residues</small>
+                            </div>
+                            
+                            <div class="feed-item mt-4">
+                                <div class="feed-label">
+                                    <span>Concentrate (<span id="concentrate-pct">0</span>%)</span>
+                                    <strong id="concentrate-kg">0.00 kg</strong>
+                                </div>
+                                <div class="progress-bar"><div id="concentrate-bar" class="fill orange"></div></div>
+                                <small>Grains, Dairy Meal, Protein Cakes, Minerals</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Schedule Tab -->
+            <section id="tab-schedule" class="tab-content fade-in">
+                <h2>📅 Essential Health & Maintenance Schedule</h2>
+                <p class="subtitle">Follow this general guide to keep your diverse livestock healthy.</p>
+
+                <div class="card glass-panel">
+                    <div class="animal-tabs" id="schedule-tabs">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div class="table-responsive">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Frequency</th>
+                                    <th>Importance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-tbody">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p class="disclaimer">⚠️ Disclaimer: This AI tool is for informational purposes only. Always consult a certified veterinarian for definitive medical advice.</p>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

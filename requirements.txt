@@ -1,3 +1,6 @@
-streamlit
+fastapi
+pydantic
 pandas
+requests
+streamlit
 streamlit-google-auth
