@@ -15,3 +15,5 @@ env/
 # Secrets
 *.secret
 *.key
+
+.vercel
