@@ -688,6 +688,35 @@ document.addEventListener("DOMContentLoaded", () => {
         saveState();
     }
 
+    function clearAuthQueryParams(params) {
+        params.delete("auth_success");
+        params.delete("auth_error");
+        params.delete("name");
+        params.delete("email");
+        const query = params.toString();
+        const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, document.title, nextUrl);
+    }
+
+    function consumeAuthQueryParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("auth_success") === "1") {
+            const name = params.get("name") || "Farmer";
+            const email = params.get("email") || "unknown@agritech.farm";
+            login({ name, email });
+            clearAuthQueryParams(params);
+            return true;
+        }
+
+        const authError = params.get("auth_error");
+        if (authError) {
+            const readableError = authError.replaceAll("_", " ");
+            window.alert(`Google sign-in failed: ${readableError}`);
+            clearAuthQueryParams(params);
+        }
+        return false;
+    }
+
     loginForm?.addEventListener("submit", (event) => {
         event.preventDefault();
         const usernameInput = document.getElementById("username");
@@ -716,7 +745,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     googleLoginBtn?.addEventListener("click", () => {
-        window.alert("Google sign-in is not configured in this local build yet. Use native login for now.");
+        const nextPath = window.location.pathname || "/";
+        window.location.href = `/auth/google/login?next=${encodeURIComponent(nextPath)}`;
     });
 
     logoutBtn?.addEventListener("click", () => {
@@ -743,6 +773,11 @@ document.addEventListener("DOMContentLoaded", () => {
     renderScheduleTable();
     refreshNutritionHerdOptions();
     updateNutrition();
+
+    const handledOAuthCallback = consumeAuthQueryParams();
+    if (handledOAuthCallback) {
+        return;
+    }
 
     if (state.user) {
         if (displayName) {

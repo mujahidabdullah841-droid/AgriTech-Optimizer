@@ -49,6 +49,11 @@ curl -X POST "https://<your-deployment>.vercel.app/api/diagnosis" \
 
 - Do not commit `google_credentials.json`.
 - If OAuth is enabled in Vercel, store values as Vercel Environment Variables and read them at runtime.
+- Required variables for Google login in this web deployment:
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `GOOGLE_REDIRECT_URI` (for example: `https://<your-domain>/auth/google/callback`)
+  - Optional hardening: `AUTH_SIGNING_SECRET`
 
 ## 🚀 Key Features
 

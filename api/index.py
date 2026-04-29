@@ -1,14 +1,26 @@
+import base64
+import hashlib
+import hmac
+import json
+import os
+import time
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, HTTPException
+import requests
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI()
 ROOT_DIR = Path(__file__).resolve().parent.parent
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+STATE_TTL_SECONDS = 600
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,6 +49,129 @@ async def frontend_js():
 @app.get("/style.css")
 async def frontend_css():
     return FileResponse(ROOT_DIR / "style.css", media_type="text/css")
+
+
+def _urlsafe_b64encode(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
+
+
+def _urlsafe_b64decode(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode("utf-8"))
+
+
+def _auth_signing_secret() -> str:
+    return (
+        os.getenv("AUTH_SIGNING_SECRET")
+        or os.getenv("GOOGLE_CLIENT_SECRET")
+        or "change-me-auth-signing-secret"
+    )
+
+
+def _safe_next_path(next_path: str | None) -> str:
+    if isinstance(next_path, str) and next_path.startswith("/") and not next_path.startswith("//"):
+        return next_path
+    return "/"
+
+
+def _encode_state(payload: dict) -> str:
+    payload_raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    signature = hmac.new(_auth_signing_secret().encode("utf-8"), payload_raw, hashlib.sha256).digest()
+    return f"{_urlsafe_b64encode(payload_raw)}.{_urlsafe_b64encode(signature)}"
+
+
+def _decode_state(token: str) -> dict:
+    payload_part, signature_part = token.split(".", maxsplit=1)
+    payload_raw = _urlsafe_b64decode(payload_part)
+    signature_raw = _urlsafe_b64decode(signature_part)
+    expected_signature = hmac.new(
+        _auth_signing_secret().encode("utf-8"),
+        payload_raw,
+        hashlib.sha256,
+    ).digest()
+    if not hmac.compare_digest(signature_raw, expected_signature):
+        raise ValueError("Invalid state signature")
+
+    payload = json.loads(payload_raw.decode("utf-8"))
+    issued_at = int(payload.get("ts", 0))
+    if abs(int(time.time()) - issued_at) > STATE_TTL_SECONDS:
+        raise ValueError("Expired state")
+    return payload
+
+
+@app.get("/auth/google/login")
+async def google_login(request: Request, next: str = "/"):
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not client_id:
+        return RedirectResponse(url="/?auth_error=google_not_configured", status_code=302)
+
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI") or str(request.url_for("google_callback"))
+    next_path = _safe_next_path(next)
+    state_token = _encode_state({"next": next_path, "ts": int(time.time())})
+
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state_token,
+        "prompt": "select_account",
+    }
+    auth_url = f"{GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url=auth_url, status_code=302)
+
+
+@app.get("/auth/google/callback", name="google_callback")
+async def google_callback(request: Request, code: str | None = None, state: str | None = None, error: str | None = None):
+    if error:
+        return RedirectResponse(url=f"/?auth_error={urllib.parse.quote(error)}", status_code=302)
+
+    if not code or not state:
+        return RedirectResponse(url="/?auth_error=missing_code_or_state", status_code=302)
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        return RedirectResponse(url="/?auth_error=google_not_configured", status_code=302)
+
+    try:
+        state_payload = _decode_state(state)
+    except Exception:
+        return RedirectResponse(url="/?auth_error=invalid_state", status_code=302)
+
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI") or str(request.url_for("google_callback"))
+    token_payload = {
+        "code": code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    token_response = requests.post(GOOGLE_TOKEN_URL, data=token_payload, timeout=15)
+    if token_response.status_code != 200:
+        return RedirectResponse(url="/?auth_error=token_exchange_failed", status_code=302)
+
+    access_token = token_response.json().get("access_token")
+    if not access_token:
+        return RedirectResponse(url="/?auth_error=missing_access_token", status_code=302)
+
+    profile_response = requests.get(
+        GOOGLE_USERINFO_URL,
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=15,
+    )
+    if profile_response.status_code != 200:
+        return RedirectResponse(url="/?auth_error=userinfo_failed", status_code=302)
+
+    profile = profile_response.json()
+    name = urllib.parse.quote(profile.get("name", "Farmer"))
+    email = urllib.parse.quote(profile.get("email", "unknown@agritech.farm"))
+    next_path = _safe_next_path(state_payload.get("next", "/"))
+    separator = "&" if "?" in next_path else "?"
+    return RedirectResponse(
+        url=f"{next_path}{separator}auth_success=1&name={name}&email={email}",
+        status_code=302,
+    )
 
 
 SPECIES_DATA = {
