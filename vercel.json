@@ -1,13 +1,26 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pip install -r requirements.txt",
+  "outputDirectory": ".",
+  "public": true,
   "rewrites": [
-    {
-      "source": "/api",
-      "destination": "/api/index.py"
-    },
     {
       "source": "/api/:path*",
       "destination": "/api/index.py"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|svg|ico|json|xml|webp))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

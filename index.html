@@ -59,6 +59,8 @@
                 <li data-target="health"><i class="ph ph-stethoscope"></i> Health</li>
                 <li data-target="nutrition"><i class="ph ph-plant"></i> Nutrition</li>
                 <li data-target="schedule"><i class="ph ph-calendar"></i> Schedule</li>
+                <li data-target="production"><i class="ph ph-trending-up"></i> Production</li>
+                <li data-target="finance"><i class="ph ph-money"></i> Finance</li>
             </ul>
             <div class="user-profile">
                 <div class="avatar"><i class="ph ph-user"></i></div>
@@ -79,7 +81,13 @@
                         <h2 id="greeting">Good Morning, Farmer!</h2>
                         <p>Here is the live status of your virtual farm.</p>
                     </div>
+                    <div class="banner-controls">
+                        <p id="banner-caption">Your Farm</p>
+                        <button id="upload-farm-photo-btn" class="btn btn-small"><i class="ph ph-upload"></i> Upload Photo</button>
+                    </div>
                 </div>
+
+                <input type="file" id="farm-photo-input" accept="image/*" style="display: none;">
 
                 <div class="metrics-grid">
                     <div class="metric-card gradient-green">
@@ -164,6 +172,11 @@
                     <!-- Herd cards generated via JS -->
                 </div>
             </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
 
             <!-- Health Tab -->
             <section id="tab-health" class="tab-content fade-in">
@@ -288,6 +301,129 @@
                     </div>
                 </div>
                 <p class="disclaimer">⚠️ Disclaimer: This AI tool is for informational purposes only. Always consult a certified veterinarian for definitive medical advice.</p>
+            </section>
+
+            <!-- Production Tab -->
+            <section id="tab-production" class="tab-content fade-in">
+                <h2>📊 Production & Productivity Tracking</h2>
+                <p class="subtitle">Monitor milk, egg, meat, and weight gain production metrics.</p>
+
+                <div class="production-grid">
+                    <div class="card glass-panel production-card">
+                        <h3>🥛 Milk Production</h3>
+                        <div class="input-group">
+                            <label>Liters per day</label>
+                            <input type="number" id="milk-input" placeholder="0" min="0" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Animal</label>
+                            <select id="milk-animal-select"></select>
+                        </div>
+                        <button class="btn btn-success" onclick="recordMilkProduction()">Record Milk</button>
+                        <p id="milk-stats" class="stat-text">Total: 0 L/day</p>
+                    </div>
+
+                    <div class="card glass-panel production-card">
+                        <h3>🥚 Egg Production</h3>
+                        <div class="input-group">
+                            <label>Eggs per day</label>
+                            <input type="number" id="egg-input" placeholder="0" min="0" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Animal</label>
+                            <select id="egg-animal-select"></select>
+                        </div>
+                        <button class="btn btn-success" onclick="recordEggProduction()">Record Eggs</button>
+                        <p id="egg-stats" class="stat-text">Total: 0 eggs/day</p>
+                    </div>
+
+                    <div class="card glass-panel production-card">
+                        <h3>⚖️ Weight Tracking</h3>
+                        <div class="input-group">
+                            <label>Weight Gain (kg)</label>
+                            <input type="number" id="weight-input" placeholder="0" min="0" step="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label>Animal</label>
+                            <select id="weight-animal-select"></select>
+                        </div>
+                        <button class="btn btn-success" onclick="recordWeightGain()">Record Weight</button>
+                        <p id="weight-stats" class="stat-text">Average: 0 kg/week</p>
+                    </div>
+                </div>
+
+                <div class="card glass-panel">
+                    <h3>📈 Production Summary</h3>
+                    <div class="production-summary" id="production-summary">
+                        <p class="placeholder-text">Add production records to see summary statistics.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Finance Tab -->
+            <section id="tab-finance" class="tab-content fade-in">
+                <h2>💰 Farm Finance Management</h2>
+                <p class="subtitle">Track expenses and income to monitor farm profitability.</p>
+
+                <div class="finance-layout">
+                    <div class="card glass-panel">
+                        <h3>💸 Record Transaction</h3>
+                        <div class="input-group">
+                            <label>Type</label>
+                            <select id="transaction-type">
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Category</label>
+                            <select id="transaction-category">
+                                <option value="feed">Animal Feed</option>
+                                <option value="medicine">Medicine & Vaccines</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="labor">Labor</option>
+                                <option value="milkDairy">Milk/Dairy</option>
+                                <option value="meatLivestock">Meat/Livestock</option>
+                                <option value="eggs">Eggs</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Amount</label>
+                            <input type="number" id="transaction-amount" placeholder="0" min="0" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label>Description</label>
+                            <input type="text" id="transaction-description" placeholder="e.g. Bought 50kg hay">
+                        </div>
+                        <button class="btn btn-primary" onclick="recordTransaction()">Record</button>
+                    </div>
+
+                    <div class="card glass-panel">
+                        <h3>📊 Financial Summary</h3>
+                        <div class="finance-summary">
+                            <div class="summary-box income-box">
+                                <p>Total Income</p>
+                                <h3 id="total-income">$0.00</h3>
+                            </div>
+                            <div class="summary-box expense-box">
+                                <p>Total Expenses</p>
+                                <h3 id="total-expenses">$0.00</h3>
+                            </div>
+                            <div class="summary-box profit-box">
+                                <p>Net Profit</p>
+                                <h3 id="net-profit">$0.00</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-panel">
+                    <h3>📋 Recent Transactions</h3>
+                    <div class="transaction-list" id="transaction-list">
+                        <p class="placeholder-text">No transactions recorded yet.</p>
+                    </div>
+                </div>
             </section>
         </main>
     </div>

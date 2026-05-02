@@ -1,9 +1,79 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const STORAGE_KEY = "agritech_state_v1";
-    const API_BASE = "";
-    const DEFAULT_BANNER =
-        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80";
+// Redirect user to backend login route
+function loginWithGoogle() {
+  window.location.href = "/auth/google/login";
+}
 
+// Handle OAuth callback when user returns
+function handleOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  const token = urlParams.get("token");
+  const user = urlParams.get("user");
+  const error = urlParams.get("auth_error");
+
+  if (error) {
+    console.error("Auth error:", error);
+    const readableError = error.replaceAll("_", " ");
+    alert(`Login failed: ${readableError}`);
+    return false;
+  }
+
+  if (token && user) {
+    // Save session
+    localStorage.setItem("auth_token", token);
+    localStorage.setItem("user_name", user);
+
+    // Clean URL (important)
+    window.history.replaceState({}, document.title, "/");
+
+    console.log("User logged in successfully:", user);
+    return true;
+  } else if (token) {
+    // Fallback for old format
+    localStorage.setItem("auth_token", token);
+    window.history.replaceState({}, document.title, "/");
+    return true;
+  }
+  
+  return false;
+}
+
+// Function to update login state in UI
+function updateLoginState(isLoggedIn, userName) {
+  const loginView = document.getElementById("login-view");
+  const appView = document.getElementById("app-view");
+
+  if (isLoggedIn && loginView && appView) {
+    loginView.classList.add("hidden");
+    appView.classList.remove("hidden");
+
+    // Update greeting if element exists
+    const greeting = document.getElementById("greeting");
+    if (greeting) {
+      greeting.textContent = `Welcome, ${userName}!`;
+    }
+  }
+}
+
+// Logout function
+function logout() {
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("user_name");
+
+  const loginView = document.getElementById("login-view");
+  const appView = document.getElementById("app-view");
+
+  if (loginView && appView) {
+    appView.classList.add("hidden");
+    loginView.classList.remove("hidden");
+  }
+
+  // Redirect to home
+  window.location.href = "/";
+}
+
+// Check if user is already logged in on page load
+document.addEventListener("DOMContentLoaded", () => {
     const SPECIES_MULTIPLIERS = {
         cattle: 0.025,
         sheep: 0.04,
@@ -44,6 +114,40 @@ document.addEventListener("DOMContentLoaded", () => {
         "Limping": "lameness"
     };
 
+    // Beautiful farm images collection
+    const FARM_IMAGES = [
+        {
+            url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80",
+            name: "Green Pasture",
+            description: "Lush green pasture with grazing cattle"
+        },
+        {
+            url: "https://images.unsplash.com/photo-1574943320219-553eb2f72395?auto=format&fit=crop&w=1600&q=80",
+            name: "Sunrise Farm",
+            description: "Beautiful sunrise over agricultural fields"
+        },
+        {
+            url: "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1600&q=80",
+            name: "Harvest Season",
+            description: "Golden grain fields ready for harvest"
+        },
+        {
+            url: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=80",
+            name: "Livestock Grazing",
+            description: "Healthy livestock on green pasture"
+        },
+        {
+            url: "https://images.unsplash.com/photo-1368681281862-eaea21cacb0f?auto=format&fit=crop&w=1600&q=80",
+            name: "Modern Farm",
+            description: "Contemporary farming landscape"
+        },
+        {
+            url: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1600&q=80",
+            name: "Country Field",
+            description: "Vast open farming landscape"
+        }
+    ];
+
     const SCHEDULE_DATA = {
         Cattle: [
             { task: "FMD vaccine", frequency: "Every 6 months", importance: "High" },
@@ -79,7 +183,15 @@ document.addEventListener("DOMContentLoaded", () => {
             silage: 200,
             vaccines: 10
         },
-        selectedScheduleAnimal: "Cattle"
+        selectedScheduleAnimal: "Cattle",
+        customImages: [],
+        currentImageIndex: 0,
+        imageRotationInterval: null,
+        completedTasks: {},
+        productivity: {},
+        production: {},
+        expenses: [],
+        income: []
     };
 
     const loginView = document.getElementById("login-view");
@@ -156,7 +268,13 @@ document.addEventListener("DOMContentLoaded", () => {
             user: state.user,
             herd: state.herd,
             inventory: state.inventory,
-            selectedScheduleAnimal: state.selectedScheduleAnimal
+            selectedScheduleAnimal: state.selectedScheduleAnimal,
+            customImages: state.customImages,
+            currentImageIndex: state.currentImageIndex,
+            completedTasks: state.completedTasks,
+            productivity: state.productivity,
+            expenses: state.expenses,
+            income: state.income
         };
     }
 
@@ -201,11 +319,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (typeof parsed.selectedScheduleAnimal === "string" && parsed.selectedScheduleAnimal.trim()) {
                     state.selectedScheduleAnimal = parsed.selectedScheduleAnimal.trim();
                 }
+                if (Array.isArray(parsed.customImages)) {
+                    state.customImages = parsed.customImages.filter(img => typeof img === "string");
+                }
+                if (Number.isFinite(parsed.currentImageIndex)) {
+                    state.currentImageIndex = parsed.currentImageIndex;
+                }
+                if (parsed.completedTasks && typeof parsed.completedTasks === "object") {
+                    state.completedTasks = parsed.completedTasks;
+                }
+                if (parsed.productivity && typeof parsed.productivity === "object") {
+                    state.productivity = parsed.productivity;
+                }
+                if (Array.isArray(parsed.expenses)) {
+                    state.expenses = parsed.expenses;
+                }
+                if (Array.isArray(parsed.income)) {
+                    state.income = parsed.income;
+                }
             }
         } catch (error) {
             console.warn("Unable to load app state:", error);
         }
     }
+
 
     function showTab(targetId) {
         tabs.forEach((tab) => {
@@ -586,7 +723,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const species = getDiagnosisSpecies();
 
         try {
-            const response = await fetch(`${API_BASE}/api/diagnosis`, {
+            const response = await fetch(`/api/diagnosis`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -652,14 +789,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const rows = SCHEDULE_DATA[state.selectedScheduleAnimal] || [];
         scheduleTbody.innerHTML = "";
-        rows.forEach((item) => {
+        rows.forEach((item, index) => {
+            const taskKey = `${state.selectedScheduleAnimal}-${index}`;
+            const isCompleted = state.completedTasks[taskKey] || false;
             const row = document.createElement("tr");
+            row.className = isCompleted ? "task-completed" : "";
             row.innerHTML = `
-                <td>${escapeHtml(item.task)}</td>
+                <td><input type="checkbox" class="task-checkbox" data-key="${escapeHtml(taskKey)}" ${isCompleted ? "checked" : ""}></td>
+                <td><span class="task-name ${isCompleted ? "strikethrough" : ""}">${escapeHtml(item.task)}</span></td>
                 <td>${escapeHtml(item.frequency)}</td>
                 <td><span class="importance ${item.importance.toLowerCase()}">${escapeHtml(item.importance)}</span></td>
             `;
             scheduleTbody.appendChild(row);
+        });
+        
+        // Add event listeners to checkboxes
+        document.querySelectorAll(".task-checkbox").forEach(checkbox => {
+            checkbox.addEventListener("change", (e) => {
+                const key = e.target.getAttribute("data-key");
+                state.completedTasks[key] = e.target.checked;
+                saveState();
+                renderScheduleTable();
+            });
         });
     }
 
@@ -693,6 +844,8 @@ document.addEventListener("DOMContentLoaded", () => {
         params.delete("auth_error");
         params.delete("name");
         params.delete("email");
+        params.delete("token");
+        params.delete("user");
         const query = params.toString();
         const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
         window.history.replaceState({}, document.title, nextUrl);
@@ -700,6 +853,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function consumeAuthQueryParams() {
         const params = new URLSearchParams(window.location.search);
+        
+        // Handle OAuth callback from Google (token & user)
+        const token = params.get("token");
+        const user = params.get("user");
+        
+        if (token && user) {
+            localStorage.setItem("auth_token", token);
+            localStorage.setItem("user_name", user);
+            login({ name: user, email: `${user}@agritech.farm` });
+            clearAuthQueryParams(params);
+            return true;
+        }
+        
+        // Handle legacy auth_success format
         if (params.get("auth_success") === "1") {
             const name = params.get("name") || "Farmer";
             const email = params.get("email") || "unknown@agritech.farm";
@@ -708,10 +875,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return true;
         }
 
+        // Handle errors
         const authError = params.get("auth_error");
         if (authError) {
             const readableError = authError.replaceAll("_", " ");
-            window.alert(`Google sign-in failed: ${readableError}`);
+            window.alert(`Login failed: ${readableError}`);
             clearAuthQueryParams(params);
         }
         return false;
@@ -755,6 +923,75 @@ document.addEventListener("DOMContentLoaded", () => {
         showLoginShell();
     });
 
+    function getCurrentBannerImage() {
+        const allImages = [...FARM_IMAGES, ...state.customImages.map(dataUrl => ({
+            url: dataUrl,
+            name: "Your Farm Photo",
+            description: "Custom farm image"
+        }))];
+        
+        if (allImages.length === 0) return FARM_IMAGES[0];
+        return allImages[state.currentImageIndex % allImages.length];
+    }
+
+    function rotateToNextImage() {
+        const allImages = [...FARM_IMAGES, ...state.customImages.map(dataUrl => ({
+            url: dataUrl,
+            name: "Your Farm Photo",
+            description: "Custom farm image"
+        }))];
+        
+        if (allImages.length === 0) return;
+        state.currentImageIndex = (state.currentImageIndex + 1) % allImages.length;
+        updateBannerImage();
+        saveState();
+    }
+
+    function updateBannerImage() {
+        if (!bannerImg) return;
+        const currentImage = getCurrentBannerImage();
+        bannerImg.src = currentImage.url;
+        const bannerCaption = document.getElementById("banner-caption");
+        if (bannerCaption) {
+            bannerCaption.textContent = currentImage.name;
+        }
+    }
+
+    function startImageRotation() {
+        if (state.imageRotationInterval) {
+            clearInterval(state.imageRotationInterval);
+        }
+        state.imageRotationInterval = setInterval(rotateToNextImage, 8000); // Change image every 8 seconds
+    }
+
+    function handleImageUpload(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+        
+        const file = files[0];
+        if (!file.type.startsWith("image/")) {
+            alert("Please upload an image file");
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            alert("Image size should be less than 5MB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            state.customImages.push(dataUrl);
+            state.currentImageIndex = FARM_IMAGES.length + state.customImages.length - 1;
+            updateBannerImage();
+            saveState();
+            alert("Farm photo added successfully!");
+            event.target.value = ""; // Reset file input
+        };
+        reader.readAsDataURL(file);
+    }
+
     function updateUI() {
         updateGreeting();
         updateInventoryMetric();
@@ -762,9 +999,313 @@ document.addEventListener("DOMContentLoaded", () => {
         updateNutrition();
         renderScheduleTabs();
         renderScheduleTable();
-        if (bannerImg) {
-            bannerImg.src = DEFAULT_BANNER;
+        updateBannerImage();
+        startImageRotation();
+    }
+
+
+
+    // Image upload functionality
+    const uploadBtn = document.getElementById("upload-farm-photo-btn");
+    const farmPhotoInput = document.getElementById("farm-photo-input");
+
+    if (uploadBtn && farmPhotoInput) {
+        uploadBtn.addEventListener("click", () => {
+            farmPhotoInput.click();
+        });
+        farmPhotoInput.addEventListener("change", handleImageUpload);
+    }
+
+    // Production tracking functions
+    function recordMilkProduction() {
+        const milkInput = document.getElementById("milk-input");
+        const animalSelect = document.getElementById("milk-animal-select");
+        const amount = parseFloat(milkInput.value);
+        const animalId = animalSelect.value;
+
+        if (!amount || amount <= 0 || !animalId) {
+            alert("Please enter a valid amount and select an animal");
+            return;
         }
+
+        if (!state.production[animalId]) {
+            state.production[animalId] = { milk: [], eggs: [], weight: [] };
+        }
+
+        state.production[animalId].milk.push({
+            amount: amount,
+            date: new Date().toISOString(),
+            type: "milk"
+        });
+
+        milkInput.value = "";
+        updateProductionStats();
+        saveState();
+        alert("Milk production recorded!");
+    }
+
+    function recordEggProduction() {
+        const eggInput = document.getElementById("egg-input");
+        const animalSelect = document.getElementById("egg-animal-select");
+        const amount = parseInt(eggInput.value);
+        const animalId = animalSelect.value;
+
+        if (!amount || amount <= 0 || !animalId) {
+            alert("Please enter a valid amount and select an animal");
+            return;
+        }
+
+        if (!state.production[animalId]) {
+            state.production[animalId] = { milk: [], eggs: [], weight: [] };
+        }
+
+        state.production[animalId].eggs.push({
+            amount: amount,
+            date: new Date().toISOString(),
+            type: "eggs"
+        });
+
+        eggInput.value = "";
+        updateProductionStats();
+        saveState();
+        alert("Egg production recorded!");
+    }
+
+    function recordWeightGain() {
+        const weightInput = document.getElementById("weight-input");
+        const animalSelect = document.getElementById("weight-animal-select");
+        const amount = parseFloat(weightInput.value);
+        const animalId = animalSelect.value;
+
+        if (!amount || amount <= 0 || !animalId) {
+            alert("Please enter a valid amount and select an animal");
+            return;
+        }
+
+        if (!state.production[animalId]) {
+            state.production[animalId] = { milk: [], eggs: [], weight: [] };
+        }
+
+        state.production[animalId].weight.push({
+            amount: amount,
+            date: new Date().toISOString(),
+            type: "weight"
+        });
+
+        weightInput.value = "";
+        updateProductionStats();
+        saveState();
+        alert("Weight gain recorded!");
+    }
+
+    function updateProductionStats() {
+        // Update milk stats
+        let totalMilk = 0;
+        let milkCount = 0;
+        Object.values(state.production).forEach(animal => {
+            if (animal.milk) {
+                animal.milk.forEach(record => {
+                    totalMilk += record.amount;
+                    milkCount++;
+                });
+            }
+        });
+        const milkStats = document.getElementById("milk-stats");
+        if (milkStats) {
+            milkStats.textContent = `Total: ${totalMilk.toFixed(1)} L (${milkCount} records)`;
+        }
+
+        // Update egg stats
+        let totalEggs = 0;
+        let eggCount = 0;
+        Object.values(state.production).forEach(animal => {
+            if (animal.eggs) {
+                animal.eggs.forEach(record => {
+                    totalEggs += record.amount;
+                    eggCount++;
+                });
+            }
+        });
+        const eggStats = document.getElementById("egg-stats");
+        if (eggStats) {
+            eggStats.textContent = `Total: ${totalEggs} eggs (${eggCount} records)`;
+        }
+
+        // Update weight stats
+        let totalWeight = 0;
+        let weightCount = 0;
+        Object.values(state.production).forEach(animal => {
+            if (animal.weight) {
+                animal.weight.forEach(record => {
+                    totalWeight += record.amount;
+                    weightCount++;
+                });
+            }
+        });
+        const weightStats = document.getElementById("weight-stats");
+        if (weightStats) {
+            const avgWeight = weightCount > 0 ? (totalWeight / weightCount).toFixed(1) : 0;
+            weightStats.textContent = `Average: ${avgWeight} kg (${weightCount} records)`;
+        }
+
+        updateProductionSummary();
+    }
+
+    function updateProductionSummary() {
+        const summary = document.getElementById("production-summary");
+        if (!summary) return;
+
+        let totalMilk = 0, totalEggs = 0, totalWeight = 0;
+        let milkAnimals = 0, eggAnimals = 0, weightAnimals = 0;
+
+        Object.entries(state.production).forEach(([animalId, data]) => {
+            if (data.milk && data.milk.length > 0) {
+                milkAnimals++;
+                data.milk.forEach(record => totalMilk += record.amount);
+            }
+            if (data.eggs && data.eggs.length > 0) {
+                eggAnimals++;
+                data.eggs.forEach(record => totalEggs += record.amount);
+            }
+            if (data.weight && data.weight.length > 0) {
+                weightAnimals++;
+                data.weight.forEach(record => totalWeight += record.amount);
+            }
+        });
+
+        if (milkAnimals === 0 && eggAnimals === 0 && weightAnimals === 0) {
+            summary.innerHTML = '<p class="placeholder-text">Add production records to see summary statistics.</p>';
+            return;
+        }
+
+        summary.innerHTML = `
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <h4>${milkAnimals}</h4>
+                    <p>Milk-producing animals</p>
+                    <span class="stat-value">${totalMilk.toFixed(1)} L total</span>
+                </div>
+                <div class="stat-item">
+                    <h4>${eggAnimals}</h4>
+                    <p>Egg-laying animals</p>
+                    <span class="stat-value">${totalEggs} eggs total</span>
+                </div>
+                <div class="stat-item">
+                    <h4>${weightAnimals}</h4>
+                    <p>Animals tracked</p>
+                    <span class="stat-value">${totalWeight.toFixed(1)} kg gained</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // Finance functions
+    function recordTransaction() {
+        const type = document.getElementById("transaction-type").value;
+        const category = document.getElementById("transaction-category").value;
+        const amount = parseFloat(document.getElementById("transaction-amount").value);
+        const description = document.getElementById("transaction-description").value.trim();
+
+        if (!amount || amount <= 0) {
+            alert("Please enter a valid amount");
+            return;
+        }
+
+        if (!description) {
+            alert("Please enter a description");
+            return;
+        }
+
+        const transaction = {
+            id: Date.now().toString(),
+            type: type,
+            category: category,
+            amount: amount,
+            description: description,
+            date: new Date().toISOString()
+        };
+
+        if (type === "expense") {
+            state.expenses.push(transaction);
+        } else {
+            state.income.push(transaction);
+        }
+
+        // Clear form
+        document.getElementById("transaction-amount").value = "";
+        document.getElementById("transaction-description").value = "";
+
+        updateFinanceStats();
+        updateTransactionList();
+        saveState();
+        alert("Transaction recorded!");
+    }
+
+    function updateFinanceStats() {
+        let totalIncome = 0;
+        let totalExpenses = 0;
+
+        state.income.forEach(transaction => {
+            totalIncome += transaction.amount;
+        });
+
+        state.expenses.forEach(transaction => {
+            totalExpenses += transaction.amount;
+        });
+
+        const netProfit = totalIncome - totalExpenses;
+
+        document.getElementById("total-income").textContent = `$${totalIncome.toFixed(2)}`;
+        document.getElementById("total-expenses").textContent = `$${totalExpenses.toFixed(2)}`;
+        document.getElementById("net-profit").textContent = `$${netProfit.toFixed(2)}`;
+
+        // Update profit box color based on value
+        const profitBox = document.getElementById("net-profit").parentElement;
+        profitBox.className = `summary-box ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+    }
+
+    function updateTransactionList() {
+        const list = document.getElementById("transaction-list");
+        if (!list) return;
+
+        const allTransactions = [...state.income, ...state.expenses]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10); // Show last 10 transactions
+
+        if (allTransactions.length === 0) {
+            list.innerHTML = '<p class="placeholder-text">No transactions recorded yet.</p>';
+            return;
+        }
+
+        list.innerHTML = allTransactions.map(transaction => `
+            <div class="transaction-item ${transaction.type}">
+                <div class="transaction-info">
+                    <span class="transaction-description">${escapeHtml(transaction.description)}</span>
+                    <span class="transaction-category">${escapeHtml(transaction.category)}</span>
+                    <span class="transaction-date">${new Date(transaction.date).toLocaleDateString()}</span>
+                </div>
+                <div class="transaction-amount ${transaction.type}">
+                    ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                </div>
+            </div>
+        `).join("");
+    }
+
+    // Initialize production and finance selects
+    function initializeProductionSelects() {
+        const selects = ['milk-animal-select', 'egg-animal-select', 'weight-animal-select'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (select) {
+                select.innerHTML = '<option value="">Select Animal</option>';
+                state.herd.forEach((animal, index) => {
+                    const option = document.createElement("option");
+                    option.value = index.toString();
+                    option.textContent = `${animal.name} (${animal.type})`;
+                    select.appendChild(option);
+                });
+            }
+        });
     }
 
     loadState();
@@ -773,6 +1314,10 @@ document.addEventListener("DOMContentLoaded", () => {
     renderScheduleTable();
     refreshNutritionHerdOptions();
     updateNutrition();
+    initializeProductionSelects();
+    updateProductionStats();
+    updateFinanceStats();
+    updateTransactionList();
 
     const handledOAuthCallback = consumeAuthQueryParams();
     if (handledOAuthCallback) {
